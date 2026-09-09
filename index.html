@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>환경기능사 퀴즈</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+      background: #f3f6f4; color: #17251c;
+    }
+    .card {
+      width: min(92vw, 680px); background: white; border-radius: 22px;
+      padding: 28px; box-shadow: 0 12px 40px rgba(0,0,0,.08);
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .sub { color: #66736b; margin-bottom: 24px; }
+    .progress { font-size: 14px; font-weight: 700; color: #28764a; margin-bottom: 10px; }
+    #question { font-size: 20px; line-height: 1.55; margin: 0 0 18px; }
+    .choices { display: grid; gap: 10px; }
+    .choice {
+      width: 100%; text-align: left; border: 1px solid #dbe4de; background: #fff;
+      border-radius: 13px; padding: 14px 16px; font-size: 16px; cursor: pointer;
+    }
+    .choice:hover { background: #f4faf6; border-color: #8ebca0; }
+    .choice:disabled { cursor: default; }
+    .choice.correct { background: #e8f7ed; border-color: #48a36b; }
+    .choice.wrong { background: #fff0f0; border-color: #d96b6b; }
+    #explanation { display: none; margin-top: 18px; padding: 15px; border-radius: 12px; background: #f6f7f6; line-height: 1.55; }
+    #next {
+      display: none; margin-top: 16px; width: 100%; border: 0; border-radius: 13px;
+      padding: 14px; background: #237a49; color: white; font-weight: 800; font-size: 16px; cursor: pointer;
+    }
+    .score { text-align: center; padding: 24px 0 6px; }
+    .score strong { font-size: 42px; color: #237a49; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>🌱 환경기능사 퀴즈</h1>
+    <div class="sub">기초 개념을 4지선다로 빠르게 복습해보자.</div>
+    <div id="quiz">
+      <div class="progress" id="progress"></div>
+      <h2 id="question"></h2>
+      <div class="choices" id="choices"></div>
+      <div id="explanation"></div>
+      <button id="next">다음 문제</button>
+    </div>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        q: "폐기물을 파쇄할 때 일반적으로 입자의 크기와 전체 표면적은 어떻게 변하는가?",
+        choices: ["크기 증가 · 표면적 감소", "크기 감소 · 표면적 증가", "둘 다 증가", "둘 다 감소"],
+        answer: 1,
+        exp: "파쇄하면 입자는 작아지고, 잘게 나뉜 입자들의 전체 표면적은 증가한다."
+      },
+      {
+        q: "철 성분이 포함된 폐기물을 분리하는 데 가장 적합한 선별 방법은?",
+        choices: ["자력선별", "공기선별", "스크린선별", "수선별"],
+        answer: 0,
+        exp: "자력선별은 자석의 힘을 이용하여 철과 같은 자성 물질을 분리한다."
+      },
+      {
+        q: "입자의 크기 차이를 이용하여 폐기물을 분리하는 방법은?",
+        choices: ["자력선별", "공기선별", "스크린선별", "부상선별"],
+        answer: 2,
+        exp: "스크린선별은 체의 구멍 크기를 이용해 입경이 다른 물질을 분리한다."
+      },
+      {
+        q: "RDF의 발열량을 높이기 위해 일반적으로 함수율은 어떻게 하는 것이 유리한가?",
+        choices: ["높인다", "낮춘다", "변화가 없다", "항상 50%로 맞춘다"],
+        answer: 1,
+        exp: "수분은 연소 과정에서 열을 소비하므로 함수율이 낮을수록 높은 발열량 확보에 유리하다."
+      },
+      {
+        q: "가벼운 물질과 무거운 물질의 공기 중 거동 차이를 이용하는 선별법은?",
+        choices: ["자력선별", "공기선별", "스크린선별", "파쇄선별"],
+        answer: 1,
+        exp: "공기선별은 공기 흐름에 대한 물질의 비중·형상 등의 차이를 이용한다."
+      }
+    ];
+
+    let current = 0;
+    let score = 0;
+    const progress = document.getElementById('progress');
+    const question = document.getElementById('question');
+    const choices = document.getElementById('choices');
+    const explanation = document.getElementById('explanation');
+    const next = document.getElementById('next');
+
+    function render() {
+      const item = questions[current];
+      progress.textContent = `${current + 1} / ${questions.length}`;
+      question.textContent = item.q;
+      choices.innerHTML = '';
+      explanation.style.display = 'none';
+      next.style.display = 'none';
+
+      item.choices.forEach((text, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = `${i + 1}. ${text}`;
+        btn.onclick = () => answer(i, btn);
+        choices.appendChild(btn);
+      });
+    }
+
+    function answer(selected, selectedButton) {
+      const item = questions[current];
+      const buttons = [...document.querySelectorAll('.choice')];
+      buttons.forEach(b => b.disabled = true);
+      buttons[item.answer].classList.add('correct');
+
+      if (selected === item.answer) {
+        score++;
+        explanation.innerHTML = `✅ <strong>정답!</strong><br>${item.exp}`;
+      } else {
+        selectedButton.classList.add('wrong');
+        explanation.innerHTML = `❌ <strong>오답!</strong><br>${item.exp}`;
+      }
+      explanation.style.display = 'block';
+      next.style.display = 'block';
+      next.textContent = current === questions.length - 1 ? '결과 보기' : '다음 문제';
+    }
+
+    next.onclick = () => {
+      current++;
+      if (current < questions.length) render();
+      else showResult();
+    };
+
+    function showResult() {
+      document.getElementById('quiz').innerHTML = `
+        <div class="score">
+          <p>퀴즈 완료 🎉</p>
+          <strong>${score} / ${questions.length}</strong>
+          <p>${score === questions.length ? '완벽해! 전부 맞혔어.' : '틀린 개념을 한 번 더 복습해보자.'}</p>
+          <button id="restart" style="border:0;border-radius:13px;padding:14px 22px;background:#237a49;color:white;font-weight:800;cursor:pointer">다시 풀기</button>
+        </div>`;
+      document.getElementById('restart').onclick = () => location.reload();
+    }
+
+    render();
+  </script>
+</body>
+</html>
